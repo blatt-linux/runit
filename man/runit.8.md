@@ -32,9 +32,12 @@ stage 2, see below.
 
 If `runit` is told to shutdown the system, or stage 2 returns, it terminates
 stage 2 if it is running, and runs `/etc/runit/3`. The systems tasks to shutdown
-and possibly halt or reboot the system are done here. If stage 3 returns,
-`runit` checks if the file `/etc/runit/reboot` exists and has the execute by
-owner permission set.  If so, the system is rebooted, it\'s halted otherwise.
+and possibly halt, reboot the system or exec a binary are done here. If stage 3
+returns, `runit` checks if the file `/etc/runit/reboot` exists and has the
+execute by owner permission set. If so, the system is rebooted, it\'s halted
+otherwise. Next it checks if the file `/etc/runit/exec` exists and has the
+execute by owner permission set. If so it executes `/etc/runit/exec`,
+replacing itself.
 
 # CTRL-ALT-DEL
 
