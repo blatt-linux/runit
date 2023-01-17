@@ -299,6 +299,34 @@ int main (int argc, const char * const *argv, char * const *envp) {
   strerr_warn2(INFO, "sending KILL signal to all processes...", 0);
   kill(-1, SIGKILL);
 
+  if ((stat(EXEC, &s) != -1)) {
+    char executable[256] = { 0 };
+
+    int fd = open(EXEC, O_RDONLY);
+    if (fd < 0) {
+      strerr_warn2(INFO, "failed to open EXEC.", 0);
+      for (;;) sig_pause();
+    }
+
+    int bytes_read = read(fd, executable, 255);
+    if (bytes_read == 255) {
+      strerr_warn2(INFO, "truncation may have occured...", 0);
+    } else if (bytes_read < 0) {
+      strerr_warn3(INFO, "read failed with error: ", error_str(errno), 0);
+    }
+
+    size_t executable_len = strlen(executable);
+    prog[0] = executable;
+    prog[1] = 0;
+    if (executable[executable_len - 1] == '\n')
+      executable[executable_len - 1] = '\0';
+
+    close(fd);
+    strerr_warn4(INFO, "exec-ing ", executable, ".", 0);
+    execve(*prog, (char *const *)prog, envp);
+    strerr_warn3(INFO, "exec failed with error: ", error_str(errno), 0);
+  }
+
   pid =fork();
   switch (pid) {
   case  0:
@@ -307,8 +335,7 @@ int main (int argc, const char * const *argv, char * const *envp) {
     strerr_warn2(INFO, "system reboot.", 0);
     sync();
     reboot_system(RB_AUTOBOOT);
-  }
-  else {
+  } else {
 #ifdef RB_POWER_OFF
     strerr_warn2(INFO, "power off...", 0);
     sync();
